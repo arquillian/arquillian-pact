@@ -21,12 +21,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -73,7 +68,15 @@ public class PactsRetriever {
             contractsSource.setProviderName(serviceName);
             final List<URI> contractsDirectory = contractsSource.retrieve();
 
-            pacts = loadContractFiles(contractsDirectory, serviceName).stream()
+            Map<String, Object> options = new HashMap<>();
+            if (algeronProviderConfigurationInstance.get() != null && algeronProviderConfigurationInstance.get().getRetrieverConfiguration() != null) {
+                Map<String, Object> config = algeronProviderConfigurationInstance.get().getRetrieverConfiguration();
+                // if pact retrieve specifies username, we need to create Pact options with authentication flag
+                if (config.containsKey("username")) {
+                    options.put("authentication", Arrays.asList("Basic", config.get("username"), config.get("password")));
+                }
+            }
+            pacts = loadContractFiles(contractsDirectory, serviceName, options).stream()
                 .filter(p -> consumerName == null || p.getConsumer().getName().equals(consumerName))
                 .collect(toList());
         } catch (IOException e) {
@@ -82,25 +85,27 @@ public class PactsRetriever {
         return pacts;
     }
 
-    protected List<Pact> loadContractFiles(List<URI> contracts, String providerName) {
+    protected List<Pact> loadContractFiles(List<URI> contracts, String providerName, Map<String, ?> options) {
         if (contracts != null) {
             List<URI> contractFiles = contracts.stream()
                 .filter(uri -> uri.toString().endsWith(".json"))
                 .collect(toList());
 
+            List<Pact> result = new ArrayList<>();
             if (contractFiles != null) {
                 return contractFiles.stream()
                     .map(URI::toString)
-                    .map(PactReader::loadPact)
+                    .map(uri -> PactReader.loadPact(options, uri))
                     .filter(pact -> pact.getProvider().getName().equals(providerName))
                     .collect(Collectors.toList());
+
             }
         }
         return new ArrayList<>();
     }
 
     protected ContractsRetriever getContractsSource(final TestClass testClass,
-        AlgeronProviderConfiguration algeronProviderConfiguration) {
+                                                    AlgeronProviderConfiguration algeronProviderConfiguration) {
 
         // Gets a test annotated directly with PactSource annotation
         final ContractsSource pactSource = testClass.getAnnotation(ContractsSource.class);

@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Annotation to set consumer in test
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.TYPE})
 public @interface Consumer {
     /**
      * @return consumer name for pact test running
