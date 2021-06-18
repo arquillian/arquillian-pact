@@ -63,7 +63,7 @@
     <version.minimal-json>0.9.5</version.minimal-json>
 
     <version.jgit>4.10.0.201712302008-r</version.jgit>
-    <version.slf4j-api>1.7.21</version.slf4j-api>
+    <version.slf4j-api>1.7.31</version.slf4j-api>
     <version.snakeyaml>1.24</version.snakeyaml>
     <version.wiremock>2.22.0</version.wiremock>
 
